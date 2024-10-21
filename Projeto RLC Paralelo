@@ -1,0 +1,120 @@
+#include <math.h>
+#include <stdio.h>
+
+double UnidadeBase(double valor, int opcao) {
+    switch (opcao) {
+        case 1: return valor * 1e-9;
+        case 2: return valor * 1e-6;
+        case 3: return valor * 1e-3;
+        case 4: return valor * 1e0;
+        case 5: return valor * 1e3;
+        case 6: return valor * 1e6;
+        case 7: return valor * 1e9;
+        default: return valor;
+    }
+}
+
+int main() {
+
+    double r, c, l, vo, il, ic, tma, vtma, tx, vt;
+    int opcao;
+
+    printf("== CALCULO DE CIRCUITO RLC PARALELO ==\n");
+
+    printf("Escolha a unidade da resistencia:\n");
+    printf("1. Nano\n2. Micro\n3. Mili\n4. Base\n5. Kilo\n6. Mega\n7. Giga\n");
+    scanf("%d", &opcao);
+    printf("Digite o valor da resistencia (em ohms): ");
+    scanf("%lf", &r);
+    r = UnidadeBase(r, opcao);
+
+    printf("Escolha a unidade da capacitancia:\n");
+    printf("1. Nano\n2. Micro\n3. Mili\n4. Base\n5. Kilo\n6. Mega\n7. Giga\n");
+    scanf("%d", &opcao);
+    printf("Digite o valor da capacitancia (em farads): ");
+    scanf("%lf", &c);
+    c = UnidadeBase(c, opcao);
+
+    printf("Escolha a unidade da indutancia:\n");
+    printf("1. Nano\n2. Micro\n3. Mili\n4. Base\n5. Kilo\n6. Mega\n7. Giga\n");
+    scanf("%d", &opcao);
+    printf("Digite o valor da indutancia (em henrys): ");
+    scanf("%lf", &l);
+    l = UnidadeBase(l, opcao);
+
+    printf("Escolha a unidade da tensao inicial no capacitor:\n");
+    printf("1. Nano\n2. Micro\n3. Mili\n4. Base\n5. Kilo\n6. Mega\n7. Giga\n");
+    scanf("%d", &opcao);
+    printf("Digite o valor da tensao inicial no capacitor (em volts): ");
+    scanf("%lf", &vo);
+    vo = UnidadeBase(vo, opcao);
+
+    printf("Escolha a unidade da corrente inicial no indutor:\n");
+    printf("1. Nano\n2. Micro\n3. Mili\n4. Base\n5. Kilo\n6. Mega\n7. Giga\n");
+    scanf("%d", &opcao);
+    printf("Digite o valor da corrente inicial no indutor (em amperes): ");
+    scanf("%lf", &il);
+    il = UnidadeBase(il, opcao);
+
+    double sigma = 1 / (2 * r * c);
+    double omega0 = 1 / sqrt(l * c);
+    double omega_d = sqrt(fabs(pow(omega0, 2) - pow(sigma, 2)));
+    ic = - il - (vo / r);
+
+    printf("\n== Tipo de circuito: ");
+    if (sigma > omega0) {
+        printf("Superamortecido ==\n");
+        double s1 = -sigma + sqrt(pow(sigma, 2) - pow(omega0, 2));
+        double s2 = -sigma - sqrt(pow(sigma, 2) - pow(omega0, 2));
+        double A1 = (ic / c - vo * s2) / (s1 - s2);
+        double A2 = vo - A1;
+
+        printf("SIGMA = %.2f s^-1\n", sigma);
+        printf("OMEGA ZERO = %.2f rad/s\n", omega0);
+        printf("s1 = %.2f s⁻¹\ns2 = %.2f s^-1\n", s1, s2);
+        printf("A1 = %.2f\nA2 = %.2f\n", A1, A2);
+
+        tma = 1 / sigma - vo / A1;
+        vtma = (A2 + A1 * tma) * exp(-sigma * tma);
+        tma *= 1e6;
+
+        printf("tm = %.2f μs\n", tma);
+        printf("V(tm) = %.2f V\n", vtma);
+    } else if (sigma == omega0) {
+        printf("Criticamente Amortecido ==\n");
+        double A1 = ic / c + sigma * vo;
+        double A2 = vo;
+
+        printf("SIGMA = %.2f s^-1\n", sigma);
+        printf("OMEGA ZERO = %.2f rad/s\n", omega0);
+        printf("A1 = %.2f\nA2 = %.2f\n", A1, A2);
+
+        tma = 1 / sigma - vo / A1;
+        vtma = (A2 + A1 * tma) * exp(-sigma * tma);
+        tma *= 1e6;
+
+        printf("tm = %.2f μs\n", tma);
+        printf("V(tm) = %.2f V\n", vtma);
+    } else {
+        printf("Subamortecido ==\n");
+        printf("SIGMA = %.2f s^-1\n", sigma);
+        printf("OMEGA ZERO = %.2f rad/s\n", omega0);
+        printf("OMEGA D = %.2f rad/s\n", omega_d);
+
+        double B1 = vo;
+        double B2 = (ic / c + sigma * vo) / omega_d;
+
+        printf("B1 = %.2f\nB2 = %.2f\n", B1, B2);
+
+        tma = atan((-sigma * B1 + B2 * omega_d) / (omega_d * B1 + B2 * sigma)) / omega_d;
+        vtma = exp(-sigma * tma) * (B1 * cos(omega_d * tma) + B2 * sin(omega_d * tma));
+        tma *= 1e6;
+
+        printf("tm = %.2f μs\n", tma);
+        printf("V(tm) = %.2f V\n", vtma);
+    }
+    printf("\n== Autores ==\nVictor Cavalcante Santos Lima\nCauan Amaro de Carvalho\n");
+    return 0;
+}
+
+
